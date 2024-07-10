@@ -1,14 +1,17 @@
 {
-  "name": "reatuarant-api",
+  "name": "restaurant-api",
   "version": "1.0.0",
-  "description": "",
+  "description": "this is a restful API for grab restaurant project",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "ek",
+  "author": "Eakkachai",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "body-parser": "^1.20.2",
+    "sweetalert2": "^11.1.9"
   }
 }
