@@ -4,10 +4,10 @@ require("dotenv").config();
 const PORT = process.env.PORT || 5000;
 const restaurantRouter = require("./routers/restaurant.router");
 
-//use middleware
+// ใช้ middleware
+app.use(express.json()); // สำหรับ parsing application/json
+app.use(express.urlencoded({ extended: true })); // สำหรับ parsing application/x-www-form-urlencoded
 app.use("/api/v1/restaurants", restaurantRouter);
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req, res) => {
   res.send("<h1>Hello Restaurant API</h1>");
