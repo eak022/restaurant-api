@@ -4,51 +4,48 @@ const User = db.User;
 const Role = db.Role;
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const {op} = require("sequelize")
+const { Op } = require("sequelize"); // Correctly importing Op
 
-//Register
-exports.signup = async(req,res) => {
-    const { userName, password, email} = req.body;
-    if(!userName || !password || !email) {
+// Register
+exports.signup = async (req, res) => {
+    const { userName, password, email } = req.body;
+    if (!userName || !password || !email) {
         res.status(400).send({
-            message:"please provide all required fields"
+            message: "Please provide all required fields"
         });
         return;
     }
 
     const newUser = {
-      userName: userName,
-      password: bcrypt.hashSync(password, 8),
-      email: email,
+        userName: userName,
+        password: bcrypt.hashSync(password, 8),
+        email: email,
     };
 
-    //save User in the database
-    await User.create(newUser).then((user)=>{
-        if(req.body.roles){
-            Role.findAll({
-              where: {
-                name: { [op.or]: req.body.roles },
-              },
-            }).then((roles)=>{
-                user.setRole(roles).then(()=>{
-                    res.send({
-                        massage:"User registered successfully!"
-                    })
-                })
+    // Save User in the database
+    try {
+        const user = await User.create(newUser);
+        
+        if (req.body.roles) {
+            const roles = await Role.findAll({
+                where: {
+                    name: { [Op.or]: req.body.roles },
+                },
             });
-        }else{
-            //set defautl role to user id =1
-            user.setRole([1]).then(()=>{
-                res.send({
-                    massage: "User registered successfully!"
-                });
+            await user.setRoles(roles); // Correctly using setRoles
+            res.send({
+                message: "User registered successfully!"
+            });
+        } else {
+            // Set default role to user id = 1
+            await user.setRoles([1]); // Correctly using setRoles
+            res.send({
+                message: "User registered successfully!"
             });
         }
-
-    }).catch((error)=>{
+    } catch (error) {
         res.status(500).send({
-            massage:
-            error.massage || "somting error register a new user",
+            message: error.message || "Something went wrong while registering a new user",
         });
-    });
-}
+    }
+};
