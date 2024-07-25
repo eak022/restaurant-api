@@ -3,6 +3,7 @@ const router = express.Router();
 const authController = require("../controllers/auth.controller");
 const { verifySignUp } = require("../middlewares");
 
+
 // ลงทะเบียนผู้ใช้
 router.post("/signup", [verifySignUp.checkDuplicateUserNameOrEmail, verifySignUp.checkRolesExisted], authController.signup);
 
