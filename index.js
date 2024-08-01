@@ -4,6 +4,11 @@ require("dotenv").config();
 const PORT = process.env.PORT || 5000;
 const restaurantRouter = require("./routers/restaurant.router");
 const authRouter = require("./routers/auth.router");
+const cors = require('cors');
+
+const corsOption = {
+    origin:"http://localhost:5173/"
+}
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -18,3 +23,6 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
     console.log("Listening to http://localhost:" + PORT);
 });
+
+app.use(cors(corsOption));
+app.use(express.json());
