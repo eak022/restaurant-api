@@ -8,9 +8,9 @@ const db = require("./models/");
 const role = db.Role;
 const cors = require("cors");
 
-// const corsOption = {
-//   origin: "http://localhost:5173",
-// };
+const corsOption = {
+  origin: "http://localhost:5173",
+};
 //dev mode
 db.sequelize.sync({ force: true }).then(() => {
   initRole();
@@ -25,7 +25,7 @@ const initRole = () => {
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// app.use(cors(corsOption));
+app.use(cors(corsOption));
 
 app.use("/api/v1/restaurant", RestaurantRouter);
 app.use("/api/v1/auth", authController);
