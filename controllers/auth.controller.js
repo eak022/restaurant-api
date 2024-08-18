@@ -6,90 +6,101 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const { Op } = require("sequelize");
 
-// Register
+//Register a new user
 exports.signup = async (req, res) => {
-  const { userName, password, email } = req.body;
-
-  if (!userName || !password || !email) {
+  const { username, password, email } = req.body;
+  if (!username || !password || !email) {
     res.status(400).send({
-      message: "Please provide all required fields",
+      message: "please provide all required fields",
     });
     return;
   }
-
+  //Prepare user data
   const newUser = {
-    userName: userName,
-    password: bcrypt.hashSync(password, 8),
+    username: username,
+    password: bcrypt.hashSync(password, 16),
     email: email,
   };
-
-  try {
-    const user = await User.create(newUser);
-
-    if (req.body.roles) {
-      const roles = await Role.findAll({
-        where: {
-          name: { [Op.or]: req.body.roles },
-        },
+  //save user in the database
+  await User.create(newUser)
+    .then((user) => {
+      if (req.body.roles) {
+        Role.findAll({
+          where: {
+            name: {
+              [Op.or]: req.body.roles,
+            },
+          },
+        }).then((roles) => {
+          user.setRoles(roles).then(() => {
+            // Corrected setaRoles to setRoles
+            res.send({
+              message: "User registered successfully!",
+            });
+          });
+        });
+      } else {
+        user.setRoles([1]).then(() => {
+          res.send({
+            message: "User registered successfully!",
+          });
+        });
+      }
+    })
+    .catch((error) => {
+      res.status(500).send({
+        message:
+          error.message ||
+          "somthing error occured while registering a new user.",
       });
-      await user.setRoles(roles);
-    } else {
-      await user.setRoles([1]);
-    }
-
-    res.send({ message: "User registered successfully!" });
-  } catch (error) {
-    console.error("Error during registration:", error);
-    res.status(500).send({
-      message:
-        error.message || "Something went wrong while registering a new user",
     });
-  }
 };
-// Signin
+
 exports.signin = async (req, res) => {
-  const { userName, password } = req.body;
-  if (!userName || !password) {
+  const { username, password } = req.body;
+  if (!username || !password) {
     res.status(400).send({
-      message: "Please provide username and password",
+      message: "โปรดระบุชื่อผู้ใช้และรหัสผ่าน",
     });
     return;
   }
-
-  try {
-    const user = await User.findOne({ where: { userName: userName } }); // เปลี่ยนจาก username เป็น userName
-    if (!user) {
-      return res.status(404).send({ message: "User not found" });
-    }
-
-    const passwordIsValid = bcrypt.compareSync(password, user.password);
-    if (!passwordIsValid) {
-      return res.status(401).send({
-        accessToken: null,
-        message: "Invalid password",
+  await User.findOne({
+    where: { username: username },
+  })
+    .then((user) => {
+      if (!user) {
+        return res.status(404).send({ message: "User not found" });
+      }
+      const passwordIsValid = bcrypt.compareSync(password, user.password);
+      if (!passwordIsValid) {
+        return res.status(401).sen({
+          accessToken: null,
+          message: "Invalid password",
+        });
+      }
+      const token = jwt.sign({ id: user.id }, config.secret, {
+        expiresIn: 86400, //1day
       });
-    }
 
-    const token = jwt.sign({ id: user.id }, config.secret, {
-      expiresIn: 86400, // 1 day
+      const authorities = [];
+      user.getRoles().then((roles) => {
+        for (let i = 0; i < roles.length; i++) {
+          authorities.push("ROLES_" + roles[i].name.toUpperCase());
+        }
+        res.status(200).send({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          roles: authorities,
+          accessToken: token,
+        });
+      });
+    })
+    .catch((error) => {
+      res.status(500).send({
+        message:
+          error.message ||
+          "Something error occured while registering a new user.",
+      });
     });
-
-    const authorities = [];
-    const roles = await user.getRoles();
-    for (let i = 0; i < roles.length; i++) {
-      authorities.push("ROLE_" + roles[i].name.toUpperCase());
-    }
-
-    res.status(200).send({
-      id: user.id,
-      userName: user.userName, // เปลี่ยนจาก username เป็น userName
-      email: user.email,
-      roles: authorities,
-      accessToken: token,
-    });
-  } catch (error) {
-    res.status(500).send({
-      message: error.message || "Something error occurred while signing in.",
-    });
-  }
 };
