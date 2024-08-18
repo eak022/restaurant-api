@@ -1,28 +1,23 @@
 const express = require("express");
 const router = express.Router();
-const restaurantcontroller = require("../controllers/restaurant.controller");
+const restaurantController = require("../controllers/restaurant.controller");
 const { authJwt } = require("../middlewares");
 
 router.post(
   "/",
   [authJwt.verifyToken, authJwt.isModOrAdmin],
-  restaurantcontroller.create
+  restaurantController.create
 );
-
-router.get("/", restaurantcontroller.getAll);
-
-router.get("/:id", [authJwt.verifyToken], restaurantcontroller.getById);
-
+router.get("/", restaurantController.getAll);
+router.get("/:id", [authJwt.verifyToken], restaurantController.getById);
 router.put(
   "/:id",
   [authJwt.verifyToken, authJwt.isModOrAdmin],
-  restaurantcontroller.update
+  restaurantController.update
 );
-
 router.delete(
   "/:id",
-  [authJwt.verifyToken, authJwt.isModOrAdmin],
-  restaurantcontroller.delete
+  [authJwt.verifyToken, authJwt.isAdmin],
+  restaurantController.delete
 );
-
 module.exports = router;

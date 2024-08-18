@@ -1,31 +1,37 @@
 const express = require("express");
-const cors = require("cors");
-require("dotenv").config();
-
 const app = express();
+require("dotenv").config();
+const RestaurantRouter = require("./routers/restaurant.router");
 const PORT = process.env.PORT || 5000;
+const authController = require("./routers/auth.router");
+const db = require("./models/");
+const role = db.Role;
+const cors = require("cors");
 
-const restaurantRouter = require("./routers/restaurant.router");
-const authRouter = require("./routers/auth.router");
+// const corsOption = {
+//   origin: "http://localhost:5173",
+// };
+//dev mode
+db.sequelize.sync({ force: true }).then(() => {
+  initRole();
+  console.log("Drob and sync DB");
+});
 
-// ใช้ CORS ก่อนการกำหนด route handlers
-app.use(
-  cors({
-    origin: "http://localhost:5173", // เปลี่ยนเป็น origin ของคุณ
-  })
-);
+const initRole = () => {
+  role.create({ id: 1, name: "user" });
+  role.create({ id: 2, name: "moderator" });
+  role.create({ id: 3, name: "admin" });
+};
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+// app.use(cors(corsOption));
 
-// กำหนด route handlers
-app.use("/api/v1/restaurants", restaurantRouter);
-app.use("/api/v1/auth", authRouter);
-
+app.use("/api/v1/restaurant", RestaurantRouter);
+app.use("/api/v1/auth", authController);
 app.get("/", (req, res) => {
   res.send("<h1>Hello Restaurant API</h1>");
 });
-
 app.listen(PORT, () => {
-  console.log("Listening to http://localhost:" + PORT);
+  console.log("Listenig to http://localhost:" + PORT);
 });

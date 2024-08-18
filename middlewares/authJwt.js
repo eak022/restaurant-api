@@ -1,44 +1,47 @@
 const jwt = require("jsonwebtoken");
-const config = require("../config/auth.config");
+const config = require("../config/auth.consfig");
 const db = require("../models");
+const { use } = require("../routers/auth.router");
 const User = db.User;
 
 //verify token
 verifyToken = (req, res, next) => {
   let token = req.headers["x-access-token"];
+  //1st verify
   if (!token) {
-    // 1st verify
     return res.status(403).send({ message: "No token provided" });
   }
   jwt.verify(token, config.secret, (err, decoded) => {
     if (err) {
-      return res.status(401).sen({ massage: "Unauthorized" });
+      return res.status(401).sen({ message: "Unauthorized!" });
     }
     req.userId = decoded.id;
     next();
   });
 };
 
-//isAdmin
-isAdmin = (req, res, next) =>{
-    User.findByPk(req.userId).then((user)=>{
-        user.getRoles().then((roles)=>{
-            for(let i = 0; i < roles.lenght; i++ ){
-                if(roles[i].name === "admin"){
-                    next();
-                    return
-                }
-            }
-            return res.status(401).then({massage:"Unauthorized access, require Admin Role"})
-        })
+//isAdmin?
+isAdmin = (req, res, next) => {
+  User.findByPk(req.userId).then((user) => {
+    user.getRoles().then((roles) => {
+      for (let i = 0; i < roles.length; i++) {
+        if (roles[i].name === "admin") {
+          next();
+          return;
+        }
+      }
+      return res
+        .status(401)
+        .send({ message: "Unauthorized,require Admin role" });
     });
-}
+  });
+};
 
 //isMod
 isMod = (req, res, next) => {
   User.findByPk(req.userId).then((user) => {
     user.getRoles().then((roles) => {
-      for (let i = 0; i < roles.lenght; i++) {
+      for (let i = 0; i < roles.length; i++) {
         if (roles[i].name === "moderator") {
           next();
           return;
@@ -46,34 +49,32 @@ isMod = (req, res, next) => {
       }
       return res
         .status(401)
-        .then({ massage: "Unauthorized access, require moderator Role" });
+        .send({ message: "Unauthorized,require Admin role" });
     });
   });
 };
 
-//isAdminOrmod
-
+//IsAddminOrmod?
 isModOrAdmin = (req, res, next) => {
   User.findByPk(req.userId).then((user) => {
     user.getRoles().then((roles) => {
-      for (let i = 0; i < roles.lenght; i++) {
-        if (roles[i].name === "moderator" || roles[i].name === "admin") {
+      for (let i = 0; i < roles.length; i++) {
+        if (roles[i].name === "admin" || roles[i].name === "moderator") {
           next();
           return;
         }
       }
-      return res.status(401).then({
-        massage: "Unauthorized access, require Admin Role or moderator Role",
-      });
+      return res
+        .status(401)
+        .send({ message: "Unauthorized,require Admin or moderator role" });
     });
   });
 };
 
-
 const authJwt = {
-    verifyToken,
-    isAdmin,
-    isMod,
-    isModOrAdmin
-}
-module.exports = authJwt
+  verifyToken,
+  isAdmin,
+  isMod,
+  isModOrAdmin,
+};
+module.exports = authJwt;
